@@ -41,24 +41,9 @@ var tasks = map[string]Task{
 	},
 }
 
-// isEmpty возвращает true, если мапа с задачами пустая, иначе возвращает false
-// если мапа пустая возвращет клиенту в ответ ошибку
-func isEmpty(w http.ResponseWriter) bool {
-	if len(tasks) == 0 {
-		http.Error(w, "Список задач пустой", http.StatusBadRequest)
-		return true
-	}
-	return false
-}
-
 // getTasks возвращает все задачи из мапы
 // обработчик для маршрута `/tasks` с методом GET
 func getTasks(w http.ResponseWriter, r *http.Request) {
-	//проверяем пустая мапа или нет
-	if isEmpty(w) {
-		return
-	}
-
 	//сериализуем данные из мапы
 	resp, err := json.Marshal(tasks)
 	if err != nil {
@@ -71,17 +56,15 @@ func getTasks(w http.ResponseWriter, r *http.Request) {
 	//статус ответа
 	w.WriteHeader(http.StatusOK)
 	//записывем сериализованные данные в тело ответа
-	w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		fmt.Printf("Ошибка записи: %s", err.Error())
+	}
 }
 
 // getTask возвращает задачу из мапы по id
 // обработчик для маршрута `/tasks/{id}` с методом GET
 func getTask(w http.ResponseWriter, r *http.Request) {
-	//проверяем пустая мапа или нет
-	if isEmpty(w) {
-		return
-	}
-
 	//читаем данные из мапы по id
 	id := chi.URLParam(r, "id")
 	task, ok := tasks[id]
@@ -103,7 +86,10 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 	//статус ответа
 	w.WriteHeader(http.StatusOK)
 	//записывем сериализованные данные в тело ответа
-	w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		fmt.Printf("Ошибка записи: %s", err.Error())
+	}
 }
 
 // postTask добавляет в мапу новую задачу
@@ -146,11 +132,6 @@ func postTask(w http.ResponseWriter, r *http.Request) {
 // delTask удаляет задачу из мапы по id
 // обработчик для маршрута `/tasks` с методом DELETE
 func delTask(w http.ResponseWriter, r *http.Request) {
-	//проверяем пустая мапа или нет
-	if isEmpty(w) {
-		return
-	}
-
 	//читаем параметр id из URL
 	id := chi.URLParam(r, "id")
 	//ищем задачу в мапе по id
